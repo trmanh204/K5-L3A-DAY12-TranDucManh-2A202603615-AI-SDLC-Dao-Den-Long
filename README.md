@@ -1,7 +1,29 @@
 # Day 12 — AI SDLC: Đảo Đèn Lồng
 
-> **Cá nhân** (1 người / 1 MSSV) · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.
+> **Demo Video:** [docs/demo/demo.mp4](docs/demo/demo.mp4) (hoặc xem tại GitHub Release v1.0.0)  
+> **Cá nhân:** Trần Đức Mạnh - MSSV: 2A202603615 · Áp dụng SDLC cùng AI để xây một **game 3D** qua **4 phase**, từ yêu cầu ban đầu tới bản phát hành.  
 > **Lab board + trợ giảng:** **[Đảo Đèn Lồng Lab](https://claude.ai/artifact/Q1RYyv1dxjUczzCbd2ZnoW)**
+
+---
+
+## ⚡ Hướng dẫn cài đặt & Khởi chạy nhanh (Tối đa 3 lệnh)
+
+```bash
+# 1. Cài đặt thư viện phụ thuộc
+npm install
+
+# 2. Khởi chạy game giao diện 3D trên trình duyệt
+npm run dev
+
+# 3. Chạy kiểm thử tự động & chế độ Headless Test Contract
+npm test
+npm run headless
+```
+
+- **Điều khiển trong game:**
+  - `W, A, S, D` hoặc `Phím mũi tên`: Di chuyển Mây xung quanh đảo và gom đom đóm.
+  - `Space` (Phím cách): Thắp sáng Đèn Lồng Lớn khi đứng gần và có đủ số đom đóm.
+- **Build phát hành:** `npm run build` (xuất bản thư mục web tĩnh `dist/`).
 
 ---
 

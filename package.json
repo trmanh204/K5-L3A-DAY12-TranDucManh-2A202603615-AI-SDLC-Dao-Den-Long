@@ -1,0 +1,28 @@
+{
+  "name": "dao-den-long",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Game 3D Đảo Đèn Lồng - AI SDLC Day 12",
+  "main": "src/core/game.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/**/*.test.js",
+    "headless": "node src/headless/runner.js"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  },
+  "keywords": [
+    "game-3d",
+    "threejs",
+    "ai-sdlc",
+    "dao-den-long"
+  ],
+  "author": "TranDucManh-2A202603615",
+  "license": "MIT"
+}
