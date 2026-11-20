@@ -1,0 +1,5 @@
+[
+  { "tick": 0, "x": 1, "z": 0, "cam_yaw_deg": 0, "interact": false, "pulse": false },
+  { "tick": 5, "x": 0, "z": 0, "cam_yaw_deg": 0, "interact": true, "pulse": false },
+  { "tick": 15, "x": 0, "z": 0, "cam_yaw_deg": 0, "interact": false, "pulse": true }
+]
