@@ -1,9 +1,29 @@
 # Đảo Đèn Lồng (Lantern Island) — Bản Phát Hành v1.0.0
 
+> 🎥 **Video Demo Dự Án:** [docs/demo/README.md](docs/demo/README.md) (hoặc xem video `.mp4` tại mục GitHub Releases v1.0.0)  
 > **Dự án thực hành AI SDLC Day 12**  
 > **Sinh viên:** Trần Đức Mạnh — **MSSV:** 2A202603615  
 > **Repository:** [https://github.com/trmanh204/K5-L3A-DAY12-TranDucManh-2A202603615-AI-SDLC-Dao-Den-Long](https://github.com/trmanh204/K5-L3A-DAY12-TranDucManh-2A202603615-AI-SDLC-Dao-Den-Long)  
 > **Test Contract:** Version 1.3
+
+---
+
+## 🌟 Sáng Tạo Của Tôi (Personal Innovation - Hạng mục Rubric F)
+
+Phần sáng tạo tuân thủ nghiêm ngặt nguyên tắc **không làm thay đổi logic lõi, không phá vỡ Test Contract** và **đầu ra headless hoàn toàn tất định**:
+
+1. **Bộ Tổng Hợp Âm Thanh Thời Gian Thực (Web Audio Synthesizer):**
+   - Không phụ thuộc vào tệp `.mp3` bên ngoài, tự động sinh các tần số âm thanh procedural (nhặt đom đóm tần số cao ngân vang, lướt gió tần số thấp, tỏa sáng sóng Sin âm hưởng thần bí, va chạm chuông cảnh báo).
+   - *Bằng chứng kiểm chứng:* Hoạt động trơn tru trong [scene.js](src/render/scene.js), có tùy chỉnh âm lượng trong menu Cài đặt.
+2. **La Bàn Định Hướng 3D Động (Dynamic Compass & Shade Radar):**
+   - HUD trên màn hình tự động tính toán góc xoay theo vector chênh lệch giữa vị trí Mây và ngọn đèn chưa thắp gần nhất.
+   - Thêm chỉ báo radar mép màn hình phát hiện Bóng Mực đang áp sát trong bán kính 14m để người chơi kịp thời phản xạ.
+3. **Chế Độ Tiếp Cận Đa Năng (Accessibility Suite):**
+   - Hỗ trợ đổi phím tùy ý (Keybindings) với cơ chế tự phát hiện xung đột trùng phím.
+   - Chế độ mù màu (Colorblind Mode): bóng mực đổi màu dạ quang Cyan `#00B3FF` và đèn tắt bị ép dẹt 20% giúp phân biệt bằng hình khối.
+   - Chế độ chữ lớn UI (x1.25) và tùy chọn giảm chuyển động (tắt rung camera).
+
+---
 
 ---
 

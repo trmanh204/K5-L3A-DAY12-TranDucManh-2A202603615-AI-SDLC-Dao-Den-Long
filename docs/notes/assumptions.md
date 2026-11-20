@@ -47,3 +47,20 @@ Sinh viên: **Trần Đức Mạnh - 2A202603615**
 10. Sinh thực thể theo lịch.
 11. Xét điều kiện Thắng/Thua.
 12. Xuất Snapshot/Event.
+
+---
+
+## Phase 3: Ticket-03 — "Đèn cạn dầu" & Test Contract v1.2
+- **Nhiên liệu đèn:** Đèn sáng có bình dầu tối đa 100 fuel, tiêu hao tự nhiên 1.0 fuel/s (1/60 per tick). Tắt ngấm khi fuel <= 0.
+- **Châm dầu:** 1 đom đóm = +10 fuel (+5 điểm). Đèn đã từng sáng thắp lại chỉ tốn 5 đom đóm (+40 điểm).
+- **Bóng Mực hút dầu:** Khi fuel < 30, đèn mất vùng an toàn; Bóng Mực wander bị thu hút tới hút 5 fuel/s; làm choáng kẻ hút dầu được thưởng +15 điểm.
+- **Luật thắng mới (Bình Minh):** Bãi bỏ luật thắng sớm `all_lit`. Người chơi thắng khi hết thời gian mà có >= 60% số đèn trên đảo đang sáng.
+- **Sức chứa giỏ:** Tăng theo công thức `capacity = Math.min(20, 10 + 2 * successful_lights)`.
+
+---
+
+## Phase 4: Ticket-04 — "Bình minh: phát hành v1.0.0" & Test Contract v1.3
+- **Benchmark:** Cảnh chuẩn Đêm 1 với 200 Bóng Mực, 100 đom đóm, 3 đèn sáng đầy dầu; Camera bay tròn 30 giây; xuất kết quả `bench.json`.
+- **Soak test:** Headless 10 đêm liên tiếp cùng tiến trình, kiểm tra rò rỉ bộ nhớ qua tỷ lệ `mem_end_mb <= 1.2 * mem_start_mb` và không crash.
+- **Bảng xếp hạng:** Lưu trữ cục bộ Top 10, sắp xếp theo score giảm dần, bằng điểm thì đạt trước đứng trước; hỗ trợ lệnh CLI `--export-leaderboard <path>`.
+- **Khả năng tiếp cận:** Hỗ trợ đổi phím (Keybindings), phụ đề cảnh báo, radar phát hiện bóng mực, chữ lớn UI (x1.25) và giảm chuyển động.
