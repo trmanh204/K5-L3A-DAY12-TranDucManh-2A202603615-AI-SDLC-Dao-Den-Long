@@ -426,6 +426,37 @@ export function createGameApp(container) {
     if (e.code === 'KeyP' || e.code === 'Escape') keyPause = false;
   });
 
+  // Settings Persistence (localStorage)
+  const savedSettings = JSON.parse(localStorage.getItem('lantern_settings') || '{"volume":80,"sens":5}');
+  const modalSettings = document.getElementById('modal-settings');
+  const inputVol = document.getElementById('input-volume');
+  const inputSens = document.getElementById('input-sens');
+  const valVol = document.getElementById('val-volume');
+  const valSens = document.getElementById('val-sens');
+
+  if (inputVol && inputSens) {
+    inputVol.value = savedSettings.volume;
+    inputSens.value = savedSettings.sens;
+    valVol.textContent = `${savedSettings.volume}%`;
+    valSens.textContent = savedSettings.sens;
+
+    inputVol.addEventListener('input', () => { valVol.textContent = `${inputVol.value}%`; });
+    inputSens.addEventListener('input', () => { valSens.textContent = inputSens.value; });
+  }
+
+  document.getElementById('btn-open-settings').addEventListener('click', () => {
+    modalSettings.style.display = 'flex';
+  });
+
+  document.getElementById('btn-save-settings').addEventListener('click', () => {
+    const newSettings = {
+      volume: Number(inputVol.value),
+      sens: Number(inputSens.value)
+    };
+    localStorage.setItem('lantern_settings', JSON.stringify(newSettings));
+    modalSettings.style.display = 'none';
+  });
+
   // UI Button Events
   document.getElementById('tab-n1').addEventListener('click', () => restartGame(1));
   document.getElementById('tab-n2').addEventListener('click', () => restartGame(2));
@@ -667,6 +698,38 @@ export function createGameApp(container) {
       promptVal.textContent = `${nearLantern.deposited}/10`;
     } else if (promptEl) {
       promptEl.style.display = 'none';
+    }
+
+    // Directional Arrow pointing to nearest unlit lantern
+    const arrowEl = document.getElementById('hud-arrow');
+    const arrowIcon = document.getElementById('arrow-icon');
+    const arrowText = document.getElementById('arrow-text');
+    let nearestUnlit = null;
+    let minUnlitDist = Infinity;
+
+    for (const l of game.lanterns) {
+      if (!l.lit) {
+        const dx = l.pos[0] - game.player.pos[0];
+        const dz = l.pos[2] - game.player.pos[2];
+        const dist = Math.hypot(dx, dz);
+        if (dist < minUnlitDist) {
+          minUnlitDist = dist;
+          nearestUnlit = l;
+        }
+      }
+    }
+
+    if (nearestUnlit && arrowEl && arrowIcon) {
+      arrowEl.style.display = 'flex';
+      arrowText.textContent = `${nearestUnlit.id} (${Math.round(minUnlitDist)}m)`;
+      const dx = nearestUnlit.pos[0] - game.player.pos[0];
+      const dz = nearestUnlit.pos[2] - game.player.pos[2];
+      // Angle relative to -Z (camera forward)
+      const angleRad = Math.atan2(dx, -dz);
+      const angleDeg = (angleRad * 180) / Math.PI;
+      arrowIcon.style.transform = `rotate(${angleDeg}deg)`;
+    } else if (arrowEl) {
+      arrowEl.style.display = 'none';
     }
 
     // Pause Modal

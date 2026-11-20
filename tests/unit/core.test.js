@@ -191,3 +191,24 @@ test('Phase 2 - Đêm 2 có 6 lồng đèn và Đêm 3 có 7 lồng đèn', () =
   assert.equal(g3.lanterns.length, 7);
   assert.equal(g3.getTimeLeft(), 360);
 });
+
+test('Phase 2 - Headless Scenarios cho các tính năng mới nạp và chạy thành công', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+
+  const scenarioFiles = [
+    'scenario_jump_dash.json',
+    'scenario_drifter.json',
+    'scenario_charm.json',
+    'scenario_jump_pad.json',
+    'scenario_fall.json'
+  ];
+
+  for (const f of scenarioFiles) {
+    const raw = fs.readFileSync(path.resolve(process.cwd(), 'src/headless/scenarios', f), 'utf8');
+    const sc = JSON.parse(raw);
+    const game = new GameState({ scenario: sc });
+    const ev = game.step({});
+    assert.ok(Array.isArray(ev), `Kịch bản ${f} phải chạy thành công không crash`);
+  }
+});

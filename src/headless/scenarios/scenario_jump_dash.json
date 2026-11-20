@@ -1,0 +1,11 @@
+{
+  "player": {
+    "pos": [0, 0, 0],
+    "flames": 3,
+    "carried": 2,
+    "grounded": true
+  },
+  "lanterns": [
+    { "id": "L1", "pos": [0, 0, 20], "lit": false, "deposited": 0 }
+  ]
+}

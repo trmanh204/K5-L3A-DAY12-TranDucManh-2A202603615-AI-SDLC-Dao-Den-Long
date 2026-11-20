@@ -128,6 +128,30 @@
       box-shadow: 0 0 10px #FFE58A;
     }
 
+    /* Directional Lantern Arrow */
+    #hud-arrow {
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    #arrow-icon {
+      font-size: 1.8rem;
+      transform-origin: center center;
+      transition: transform 0.1s linear;
+      filter: drop-shadow(0 0 8px rgba(242, 193, 78, 0.8));
+    }
+
     /* Cooldowns (Bottom Right) */
     #hud-cooldowns {
       position: absolute;
@@ -280,6 +304,13 @@
     <button class="night-tab active" id="tab-n1">Đêm 1: Đảo Bến</button>
     <button class="night-tab" id="tab-n2">Đêm 2: Đảo Cau</button>
     <button class="night-tab" id="tab-n3">Đêm 3: Đảo Chuông</button>
+    <button class="night-tab" id="btn-open-settings" style="margin-left: 10px; background: rgba(242,193,78,0.2); color: var(--gold); border-color: var(--gold);">⚙️ Cài đặt</button>
+  </div>
+
+  <!-- Directional Arrow to Nearest Unlit Lantern -->
+  <div id="hud-arrow">
+    <div id="arrow-icon">⬆️</div>
+    <div id="arrow-text">Đèn gần nhất (L1)</div>
   </div>
 
   <!-- HUD Top -->
@@ -351,6 +382,25 @@
       </div>
       <button class="btn" id="btn-next-night" style="display: none;">Sang Đêm Kế Tiếp</button>
       <button class="btn" id="btn-retry">Chơi Lại</button>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings" style="display: none;">
+    <div class="modal-box">
+      <h1>⚙️ CÀI ĐẶT</h1>
+      <div style="margin: 20px 0; text-align: left; line-height: 2;">
+        <label>
+          🔊 <b>Âm lượng hiệu ứng (SFX):</b> <span id="val-volume">80%</span><br>
+          <input type="range" id="input-volume" min="0" max="100" value="80" style="width: 100%;">
+        </label>
+        <br><br>
+        <label>
+          🎯 <b>Độ nhạy góc nhìn:</b> <span id="val-sens">5</span><br>
+          <input type="range" id="input-sens" min="1" max="10" value="5" style="width: 100%;">
+        </label>
+      </div>
+      <button class="btn" id="btn-save-settings">Lưu & Đóng</button>
     </div>
   </div>
 

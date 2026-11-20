@@ -1,0 +1,8 @@
+{
+  "player": {
+    "pos": [20, 0, 18],
+    "flames": 3,
+    "carried": 0,
+    "grounded": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "player": {
+    "pos": [0, 0, 0],
+    "flames": 3,
+    "carried": 0
+  },
+  "charms": [
+    { "id": "C1", "pos": [0.6, 0, 0], "available": true }
+  ]
+}
