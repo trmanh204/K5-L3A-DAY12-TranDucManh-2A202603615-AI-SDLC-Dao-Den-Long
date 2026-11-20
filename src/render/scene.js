@@ -659,6 +659,7 @@ export function createGameApp(container) {
   let clock = new THREE.Clock();
   let tickAccumulator = 0;
   const TICK_INTERVAL = 1 / 60.0;
+  let screenShakeTimer = 0;
 
   function animate() {
     requestAnimationFrame(animate);
@@ -672,10 +673,12 @@ export function createGameApp(container) {
 
       let moveX = 0;
       let moveZ = 0;
-      if (keys['KeyW'] || keys['ArrowUp']) moveZ += 1;
-      if (keys['KeyS'] || keys['ArrowDown']) moveZ -= 1;
-      if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-      if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+      const kb = savedSettings.keybinds || DEFAULT_KEYBINDS;
+      // W / Up tiến lên phía trước màn hình (giảm Z), S / Down lùi về phía người xem (tăng Z)
+      if (keys[kb.up] || keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
+      if (keys[kb.down] || keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
+      if (keys[kb.left] || keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
+      if (keys[kb.right] || keys['KeyD'] || keys['ArrowRight']) moveX += 1;
 
       const input = {
         x: moveX,
@@ -701,7 +704,12 @@ export function createGameApp(container) {
           pulseRingMat.opacity = 0.8;
         }
         if (ev.name === 'lantern_lit') sound.playLanternLit();
-        if (ev.name === 'player_hit') sound.playHit();
+        if (ev.name === 'player_hit') {
+          sound.playHit();
+          if (!savedSettings.reduceMotion) {
+            screenShakeTimer = 0.25;
+          }
+        }
       }
     }
 
@@ -714,18 +722,29 @@ export function createGameApp(container) {
       pulseRingMat.opacity = Math.max(0, 0.8 * (1 - progress));
     }
 
-    // Sync Player
+    // Sync Player position & facing rotation
     mayGroup.position.set(game.player.pos[0], game.player.pos[1], game.player.pos[2]);
+    if (Math.hypot(game.player.facing[0], game.player.facing[1]) > 0.05) {
+      mayGroup.rotation.y = Math.atan2(game.player.facing[0], -game.player.facing[1]);
+    }
+
     if (game.invuln_ticks > 0) {
       mayGroup.visible = Math.floor(time * 15) % 2 === 0;
     } else {
       mayGroup.visible = true;
     }
 
-    // Camera follow
+    // Camera follow with optional screen shake
     camera.position.x = THREE.MathUtils.lerp(camera.position.x, game.player.pos[0], 0.1);
     camera.position.y = THREE.MathUtils.lerp(camera.position.y, game.player.pos[1] + 9.5, 0.1);
     camera.position.z = THREE.MathUtils.lerp(camera.position.z, game.player.pos[2] + 13.5, 0.1);
+
+    if (screenShakeTimer > 0) {
+      screenShakeTimer -= delta;
+      camera.position.x += (Math.random() - 0.5) * 0.35;
+      camera.position.y += (Math.random() - 0.5) * 0.35;
+    }
+
     camera.lookAt(game.player.pos[0], game.player.pos[1] + 1.0, game.player.pos[2]);
 
     // Ambient Lighting progressive brightness per spec
