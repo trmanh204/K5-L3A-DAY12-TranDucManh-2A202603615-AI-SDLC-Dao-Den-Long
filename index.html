@@ -294,17 +294,84 @@
       color: var(--gold);
       background: rgba(242, 193, 78, 0.15);
     }
+    /* Subtitle & Alert Banner */
+    #hud-subtitle {
+      position: absolute;
+      top: 130px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 20, 48, 0.9);
+      border: 1px solid var(--gold);
+      color: #FFFFFF;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      pointer-events: none;
+      z-index: 25;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: 0 0 15px rgba(242, 193, 78, 0.4);
+      text-align: center;
+    }
+
+    #hud-subtitle.visible {
+      opacity: 1;
+    }
+
+    /* Edge Indicator for nearest Shade */
+    #shade-arrow {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 90, 95, 0.2);
+      border: 1px solid var(--danger);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--danger);
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 20;
+    }
+
+    #shade-arrow.visible {
+      opacity: 1;
+    }
+
+    /* Large Text accessibility class */
+    body.large-text {
+      font-size: 125% !important;
+    }
+    body.large-text .hud-card {
+      padding: 12px 18px !important;
+      font-size: 1.1rem !important;
+    }
+    body.large-text #hud-timer {
+      font-size: 2.2rem !important;
+    }
   </style>
 </head>
 <body>
   <div id="game-container"></div>
+
+  <!-- Subtitle notification banner -->
+  <div id="hud-subtitle">Cảnh báo</div>
+
+  <!-- Edge indicator for approaching shade -->
+  <div id="shade-arrow">⚠️ Bóng Mực gần bạn: <span id="shade-dir">⬅️</span></div>
 
   <!-- Night Selection -->
   <div id="night-nav">
     <button class="night-tab active" id="tab-n1">Đêm 1: Đảo Bến</button>
     <button class="night-tab" id="tab-n2">Đêm 2: Đảo Cau</button>
     <button class="night-tab" id="tab-n3">Đêm 3: Đảo Chuông</button>
-    <button class="night-tab" id="btn-open-settings" style="margin-left: 10px; background: rgba(242,193,78,0.2); color: var(--gold); border-color: var(--gold);">⚙️ Cài đặt</button>
+    <button class="night-tab" id="btn-open-leaderboard" style="margin-left: 10px; background: rgba(100,255,218,0.15); color: #64ffda; border-color: #64ffda;">🏆 BXH</button>
+    <button class="night-tab" id="btn-open-settings" style="margin-left: 6px; background: rgba(242,193,78,0.2); color: var(--gold); border-color: var(--gold);">⚙️ Cài đặt</button>
   </div>
 
   <!-- Directional Arrow to Nearest Unlit Lantern -->
@@ -372,40 +439,108 @@
     </div>
   </div>
 
-  <!-- Game Over Modal -->
+  <!-- Game Over / Victory Modal -->
   <div class="modal-overlay" id="modal-gameover" style="display: none;">
     <div class="modal-box">
       <h1 id="gameover-title">🎉 CHIẾN THẮNG</h1>
       <p id="gameover-desc">Toàn bộ lồng đèn trên đảo đã rực sáng, xua tan bóng tối!</p>
-      <div style="font-size: 1.2rem; color: var(--gold); margin-bottom: 20px;">
+      <div style="font-size: 1.2rem; color: var(--gold); margin-bottom: 14px;">
         Tổng điểm: <b id="gameover-score">0</b>
       </div>
+
+      <!-- Save Score to Local Leaderboard -->
+      <div id="save-score-section" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px;">
+          Lưu kỷ lục vào Bảng Xếp Hạng (3–12 ký tự):
+        </label>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+          <input type="text" id="input-player-name" maxlength="12" placeholder="Tên của bạn" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; width: 140px;">
+          <button class="btn" id="btn-save-score" style="padding: 6px 14px; font-size: 0.85rem; margin: 0;">Lưu Điểm</button>
+        </div>
+        <div id="save-score-msg" style="font-size: 0.8rem; margin-top: 6px; display: none;"></div>
+      </div>
+
       <button class="btn" id="btn-next-night" style="display: none;">Sang Đêm Kế Tiếp</button>
       <button class="btn" id="btn-retry">Chơi Lại</button>
     </div>
   </div>
 
-  <!-- Settings Modal -->
+  <!-- Leaderboard Modal -->
+  <div class="modal-overlay" id="modal-leaderboard" style="display: none;">
+    <div class="modal-box" style="max-width: 520px; width: 90%;">
+      <h1>🏆 BẢNG XẾP HẠNG TOP 10</h1>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 14px;">Kỷ lục người chơi xuất sắc nhất trên Đảo Đèn Lồng</p>
+      <div style="max-height: 280px; overflow-y: auto; margin-bottom: 16px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--gold); color: var(--gold);">
+              <th style="padding: 6px 8px;">#</th>
+              <th style="padding: 6px 8px;">Tên</th>
+              <th style="padding: 6px 8px;">Điểm</th>
+              <th style="padding: 6px 8px;">Đêm</th>
+              <th style="padding: 6px 8px;">Thời gian</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-tbody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn" id="btn-close-leaderboard">Đóng</button>
+    </div>
+  </div>
+
+  <!-- Settings & Accessibility Modal -->
   <div class="modal-overlay" id="modal-settings" style="display: none;">
-    <div class="modal-box">
-      <h1>⚙️ CÀI ĐẶT</h1>
-      <div style="margin: 20px 0; text-align: left; line-height: 2;">
+    <div class="modal-box" style="max-width: 560px; max-height: 90vh; overflow-y: auto; text-align: left;">
+      <h1 style="text-align: center;">⚙️ CÀI ĐẶT & TIẾP CẬN</h1>
+      
+      <div style="margin: 16px 0; font-size: 0.9rem; line-height: 1.8;">
+        <h3 style="color: var(--gold); border-bottom: 1px solid rgba(242,193,78,0.3); padding-bottom: 4px; margin-bottom: 8px;">Âm Thanh & Điều Khiển</h3>
         <label>
           🔊 <b>Âm lượng hiệu ứng (SFX):</b> <span id="val-volume">80%</span><br>
           <input type="range" id="input-volume" min="0" max="100" value="80" style="width: 100%;">
         </label>
-        <br><br>
+        <br>
         <label>
           🎯 <b>Độ nhạy góc nhìn:</b> <span id="val-sens">5</span><br>
           <input type="range" id="input-sens" min="1" max="10" value="5" style="width: 100%;">
         </label>
-        <br><br>
-        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+
+        <h3 style="color: var(--gold); border-bottom: 1px solid rgba(242,193,78,0.3); padding-bottom: 4px; margin: 14px 0 8px;">Dễ Tiếp Cận (Accessibility)</h3>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
           <input type="checkbox" id="input-cb-mode" style="width: 18px; height: 18px;">
-          <span>👁️ <b>Bảng màu dễ phân biệt (Chế độ mù màu)</b></span>
+          <span>👁️ <b>Chế độ mù màu (Bảng màu dễ phân biệt)</b></span>
         </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+          <input type="checkbox" id="input-reduce-motion" style="width: 18px; height: 18px;">
+          <span>🔕 <b>Giảm chuyển động (Tắt rung camera & chớp tắt)</b></span>
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 8px;">
+          <input type="checkbox" id="input-large-text" style="width: 18px; height: 18px;">
+          <span>🔤 <b>Cỡ chữ lớn UI (x1.25)</b></span>
+        </label>
+
+        <h3 style="color: var(--gold); border-bottom: 1px solid rgba(242,193,78,0.3); padding-bottom: 4px; margin: 14px 0 8px;">Đổi Phím Điều Khiển</h3>
+        <div id="keybinds-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
+          <div>Tiến: <input type="text" id="key-up" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+          <div>Lùi: <input type="text" id="key-down" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+          <div>Trái: <input type="text" id="key-left" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+          <div>Phải: <input type="text" id="key-right" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+          <div>Nhảy: <input type="text" id="key-jump" style="width: 60px; text-align: center;" value="Space"></div>
+          <div>Lướt: <input type="text" id="key-dash" style="width: 60px; text-align: center;" value="Shift"></div>
+          <div>Nạp đèn: <input type="text" id="key-interact" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+          <div>Tỏa sáng: <input type="text" id="key-pulse" maxlength="1" style="width: 40px; text-align: center; text-transform: uppercase;"></div>
+        </div>
+        <div id="keybinds-warn" style="color: var(--danger); font-size: 0.8rem; margin-top: 6px; display: none;">⚠️ Phát hiện phím bị trùng! Hãy chọn phím khác.</div>
+        <div style="margin-top: 10px;">
+          <button class="btn" id="btn-reset-keybinds" style="padding: 4px 10px; font-size: 0.78rem; background: rgba(255,255,255,0.1);">Khôi phục mặc định</button>
+        </div>
       </div>
-      <button class="btn" id="btn-save-settings">Lưu & Đóng</button>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <button class="btn" id="btn-save-settings">Lưu & Đóng</button>
+      </div>
     </div>
   </div>
 

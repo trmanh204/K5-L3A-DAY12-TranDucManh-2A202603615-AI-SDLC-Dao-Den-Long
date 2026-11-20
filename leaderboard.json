@@ -1,0 +1,25 @@
+{
+  "entries": [
+    {
+      "name": "Player_Pro",
+      "score": 950,
+      "nights_won": 3,
+      "achieved_at": "2026-11-20T10:00:00.000Z",
+      "seed": 42
+    },
+    {
+      "name": "May_Keeper",
+      "score": 620,
+      "nights_won": 2,
+      "achieved_at": "2026-11-20T11:30:00.000Z",
+      "seed": 7
+    },
+    {
+      "name": "Lantern_Ace",
+      "score": 480,
+      "nights_won": 1,
+      "achieved_at": "2026-11-20T14:15:00.000Z",
+      "seed": 1
+    }
+  ]
+}

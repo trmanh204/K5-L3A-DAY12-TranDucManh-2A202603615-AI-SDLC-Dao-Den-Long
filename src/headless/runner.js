@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { GameState } from '../core/gameState.js';
+import { LeaderboardManager } from '../core/leaderboard.js';
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -17,7 +18,8 @@ function parseArgs() {
     inputsPath: null,
     ticks: null,
     outPath: null,
-    snapshotEvery: 10
+    snapshotEvery: 10,
+    exportLeaderboard: null
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -36,6 +38,8 @@ function parseArgs() {
       parsed.outPath = args[++i];
     } else if (arg === '--snapshot-every' && i + 1 < args.length) {
       parsed.snapshotEvery = parseInt(args[++i], 10);
+    } else if (arg === '--export-leaderboard' && i + 1 < args.length) {
+      parsed.exportLeaderboard = args[++i];
     }
   }
 
@@ -49,6 +53,20 @@ function exitWithValidationCode(message) {
 
 function main() {
   const options = parseArgs();
+
+  // Export Leaderboard command check
+  if (options.exportLeaderboard) {
+    const lm = new LeaderboardManager();
+    // Khởi tạo một số mẫu nếu chưa có dữ liệu
+    if (lm.getEntries().length === 0) {
+      lm.addEntry({ name: 'Player_Pro', score: 950, nights_won: 3, achieved_at: '2026-11-20T10:00:00.000Z', seed: 42 });
+      lm.addEntry({ name: 'May_Keeper', score: 620, nights_won: 2, achieved_at: '2026-11-20T11:30:00.000Z', seed: 7 });
+      lm.addEntry({ name: 'Lantern_Ace', score: 480, nights_won: 1, achieved_at: '2026-11-20T14:15:00.000Z', seed: 1 });
+    }
+    const out = lm.exportJson(options.exportLeaderboard);
+    console.log(`[Leaderboard] Exported ${lm.getEntries().length} entries to: ${out}`);
+    process.exit(0);
+  }
 
   if (options.ticks === null || isNaN(options.ticks) || options.ticks < 0) {
     console.error('Error: --ticks <int> is required and must be >= 0.');

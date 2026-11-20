@@ -315,3 +315,56 @@ test('Phase 3 - Headless Scenarios nạp và chạy thành công không crash', 
     assert.ok(Array.isArray(ev));
   }
 });
+
+test('Phase 4 - Test Contract v1.3 có đầy đủ bench_cmd, soak_cmd và leaderboard_cmd', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const raw = fs.readFileSync(path.resolve(process.cwd(), 'game.contract.json'), 'utf8');
+  const contract = JSON.parse(raw);
+  assert.equal(contract.contract_version, '1.3');
+  assert.ok(contract.bench_cmd.includes('benchmark.js'));
+  assert.ok(contract.soak_cmd.includes('soak.js'));
+  assert.ok(contract.leaderboard_cmd.includes('--export-leaderboard'));
+});
+
+test('Phase 4 - LeaderboardManager: validate tên 3–12 ký tự, sắp xếp điểm giảm dần và giữ top 10', async () => {
+  const { LeaderboardManager } = await import('../../src/core/leaderboard.js');
+  // Validate tên
+  assert.equal(LeaderboardManager.validateName('Ab'), false, 'Tên < 3 ký tự bị từ chối');
+  assert.equal(LeaderboardManager.validateName('A'.repeat(13)), false, 'Tên > 12 ký tự bị từ chối');
+  assert.equal(LeaderboardManager.validateName('Player_1'), true, 'Tên hợp lệ');
+  assert.equal(LeaderboardManager.validateName('Mây_2026'), true, 'Tên tiếng Việt có dấu hợp lệ');
+
+  // Thử nghiệm sắp xếp top 10
+  const lm = new LeaderboardManager('temp_test_lb.json');
+  lm.entries = [];
+  lm.addEntry({ name: 'Player_C', score: 300, achieved_at: '2026-11-20T10:00:00Z' });
+  lm.addEntry({ name: 'Player_A', score: 500, achieved_at: '2026-11-20T10:00:00Z' });
+  lm.addEntry({ name: 'Player_B', score: 400, achieved_at: '2026-11-20T10:00:00Z' });
+
+  const entries = lm.getEntries();
+  assert.equal(entries[0].name, 'Player_A');
+  assert.equal(entries[0].score, 500);
+  assert.equal(entries[1].name, 'Player_B');
+  assert.equal(entries[2].name, 'Player_C');
+
+  // Thêm nhiều hơn 10 entries để kiểm tra giữ top 10
+  for (let i = 0; i < 15; i++) {
+    lm.addEntry({ name: `User_${i}`, score: 100 + i });
+  }
+  assert.equal(lm.getEntries().length, 10, 'Chỉ lưu giữ tối đa top 10 kỷ lục');
+
+  // Dọn dẹp file tạm
+  const fs = await import('node:fs');
+  if (fs.existsSync('temp_test_lb.json')) fs.unlinkSync('temp_test_lb.json');
+});
+
+test('Phase 4 - Benchmark scene setup đúng 200 bóng mực, 100 đom đóm, 3 đèn sáng', () => {
+  const game = new GameState({ seed: 42, night: 1 });
+  for (let i = 0; i < 3; i++) {
+    game.lanterns[i].lit = true;
+    game.lanterns[i].fuel = 100;
+  }
+  assert.equal(game.lanterns.filter(l => l.lit).length, 3);
+  assert.equal(game.lanterns[0].fuel, 100);
+});

@@ -400,6 +400,34 @@ export function createGameApp(container) {
 
   restartGame(1);
 
+  // Default Keybindings
+  const DEFAULT_KEYBINDS = {
+    up: 'KeyW',
+    down: 'KeyS',
+    left: 'KeyA',
+    right: 'KeyD',
+    jump: 'Space',
+    dash: 'ShiftLeft',
+    interact: 'KeyE',
+    pulse: 'KeyQ',
+    pause: 'KeyP'
+  };
+
+  // Settings & Accessibility Persistence (localStorage)
+  const savedSettings = JSON.parse(localStorage.getItem('lantern_settings') || JSON.stringify({
+    volume: 80,
+    sens: 5,
+    cbMode: false,
+    reduceMotion: false,
+    largeText: false,
+    keybinds: { ...DEFAULT_KEYBINDS }
+  }));
+  if (!savedSettings.keybinds) savedSettings.keybinds = { ...DEFAULT_KEYBINDS };
+
+  if (savedSettings.largeText) {
+    document.body.classList.add('large-text');
+  }
+
   // Input Handling
   const keys = {};
   let keyInteract = false;
@@ -410,59 +438,207 @@ export function createGameApp(container) {
 
   window.addEventListener('keydown', (e) => {
     keys[e.code] = true;
-    if (e.code === 'KeyE') keyInteract = true;
-    if (e.code === 'KeyQ' || e.code === 'KeyF') keyPulse = true;
-    if (e.code === 'Space') keyJump = true;
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') keyDash = true;
-    if (e.code === 'KeyP' || e.code === 'Escape') keyPause = true;
+    const kb = savedSettings.keybinds || DEFAULT_KEYBINDS;
+    if (e.code === kb.interact || e.code === 'KeyE') keyInteract = true;
+    if (e.code === kb.pulse || e.code === 'KeyQ' || e.code === 'KeyF') keyPulse = true;
+    if (e.code === kb.jump || e.code === 'Space') keyJump = true;
+    if (e.code === kb.dash || e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') keyDash = true;
+    if (e.code === kb.pause || e.code === 'KeyP' || e.code === 'Escape') keyPause = true;
   });
 
   window.addEventListener('keyup', (e) => {
     keys[e.code] = false;
-    if (e.code === 'KeyE') keyInteract = false;
-    if (e.code === 'KeyQ' || e.code === 'KeyF') keyPulse = false;
-    if (e.code === 'Space') keyJump = false;
-    if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') keyDash = false;
-    if (e.code === 'KeyP' || e.code === 'Escape') keyPause = false;
+    const kb = savedSettings.keybinds || DEFAULT_KEYBINDS;
+    if (e.code === kb.interact || e.code === 'KeyE') keyInteract = false;
+    if (e.code === kb.pulse || e.code === 'KeyQ' || e.code === 'KeyF') keyPulse = false;
+    if (e.code === kb.jump || e.code === 'Space') keyJump = false;
+    if (e.code === kb.dash || e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyK') keyDash = false;
+    if (e.code === kb.pause || e.code === 'KeyP' || e.code === 'Escape') keyPause = false;
   });
 
-  // Settings Persistence (localStorage)
-  const savedSettings = JSON.parse(localStorage.getItem('lantern_settings') || '{"volume":80,"sens":5,"cbMode":false}');
+  // Settings Modal Elements
   const modalSettings = document.getElementById('modal-settings');
   const inputVol = document.getElementById('input-volume');
   const inputSens = document.getElementById('input-sens');
   const valVol = document.getElementById('val-volume');
   const valSens = document.getElementById('val-sens');
   const inputCbMode = document.getElementById('input-cb-mode');
+  const inputReduceMotion = document.getElementById('input-reduce-motion');
+  const inputLargeText = document.getElementById('input-large-text');
+
+  const keyUp = document.getElementById('key-up');
+  const keyDown = document.getElementById('key-down');
+  const keyLeft = document.getElementById('key-left');
+  const keyRight = document.getElementById('key-right');
+  const keyJumpInput = document.getElementById('key-jump');
+  const keyDashInput = document.getElementById('key-dash');
+  const keyInteractInput = document.getElementById('key-interact');
+  const keyPulseInput = document.getElementById('key-pulse');
+  const keyWarn = document.getElementById('keybinds-warn');
+
+  function populateKeybindInputs() {
+    const kb = savedSettings.keybinds;
+    if (keyUp) keyUp.value = kb.up.replace('Key', '');
+    if (keyDown) keyDown.value = kb.down.replace('Key', '');
+    if (keyLeft) keyLeft.value = kb.left.replace('Key', '');
+    if (keyRight) keyRight.value = kb.right.replace('Key', '');
+    if (keyJumpInput) keyJumpInput.value = kb.jump === 'Space' ? 'Space' : kb.jump.replace('Key', '');
+    if (keyDashInput) keyDashInput.value = kb.dash.includes('Shift') ? 'Shift' : kb.dash.replace('Key', '');
+    if (keyInteractInput) keyInteractInput.value = kb.interact.replace('Key', '');
+    if (keyPulseInput) keyPulseInput.value = kb.pulse.replace('Key', '');
+  }
 
   if (inputVol && inputSens) {
     inputVol.value = savedSettings.volume;
     inputSens.value = savedSettings.sens;
     valVol.textContent = `${savedSettings.volume}%`;
     valSens.textContent = savedSettings.sens;
-    if (inputCbMode) {
-      inputCbMode.checked = !!savedSettings.cbMode;
-    }
+    if (inputCbMode) inputCbMode.checked = !!savedSettings.cbMode;
+    if (inputReduceMotion) inputReduceMotion.checked = !!savedSettings.reduceMotion;
+    if (inputLargeText) inputLargeText.checked = !!savedSettings.largeText;
+    populateKeybindInputs();
 
     inputVol.addEventListener('input', () => { valVol.textContent = `${inputVol.value}%`; });
     inputSens.addEventListener('input', () => { valSens.textContent = inputSens.value; });
   }
+
+  document.getElementById('btn-reset-keybinds')?.addEventListener('click', () => {
+    savedSettings.keybinds = { ...DEFAULT_KEYBINDS };
+    populateKeybindInputs();
+    if (keyWarn) keyWarn.style.display = 'none';
+  });
 
   document.getElementById('btn-open-settings').addEventListener('click', () => {
     modalSettings.style.display = 'flex';
   });
 
   document.getElementById('btn-save-settings').addEventListener('click', () => {
-    const newSettings = {
-      volume: Number(inputVol.value),
-      sens: Number(inputSens.value),
-      cbMode: inputCbMode ? inputCbMode.checked : false
+    // Check key collision
+    const newKeys = [
+      keyUp.value.toUpperCase(),
+      keyDown.value.toUpperCase(),
+      keyLeft.value.toUpperCase(),
+      keyRight.value.toUpperCase(),
+      keyJumpInput.value.toUpperCase(),
+      keyDashInput.value.toUpperCase(),
+      keyInteractInput.value.toUpperCase(),
+      keyPulseInput.value.toUpperCase()
+    ];
+    const uniqueKeys = new Set(newKeys);
+    if (uniqueKeys.size < newKeys.length) {
+      if (keyWarn) keyWarn.style.display = 'block';
+      return;
+    }
+    if (keyWarn) keyWarn.style.display = 'none';
+
+    savedSettings.volume = Number(inputVol.value);
+    savedSettings.sens = Number(inputSens.value);
+    savedSettings.cbMode = inputCbMode ? inputCbMode.checked : false;
+    savedSettings.reduceMotion = inputReduceMotion ? inputReduceMotion.checked : false;
+    savedSettings.largeText = inputLargeText ? inputLargeText.checked : false;
+
+    savedSettings.keybinds = {
+      up: `Key${keyUp.value.toUpperCase()}`,
+      down: `Key${keyDown.value.toUpperCase()}`,
+      left: `Key${keyLeft.value.toUpperCase()}`,
+      right: `Key${keyRight.value.toUpperCase()}`,
+      jump: keyJumpInput.value === 'Space' ? 'Space' : `Key${keyJumpInput.value.toUpperCase()}`,
+      dash: keyDashInput.value === 'Shift' ? 'ShiftLeft' : `Key${keyDashInput.value.toUpperCase()}`,
+      interact: `Key${keyInteractInput.value.toUpperCase()}`,
+      pulse: `Key${keyPulseInput.value.toUpperCase()}`,
+      pause: 'KeyP'
     };
-    savedSettings.volume = newSettings.volume;
-    savedSettings.sens = newSettings.sens;
-    savedSettings.cbMode = newSettings.cbMode;
-    localStorage.setItem('lantern_settings', JSON.stringify(newSettings));
+
+    if (savedSettings.largeText) {
+      document.body.classList.add('large-text');
+    } else {
+      document.body.classList.remove('large-text');
+    }
+
+    localStorage.setItem('lantern_settings', JSON.stringify(savedSettings));
     modalSettings.style.display = 'none';
+  });
+
+  // Leaderboard Modal & Saving Logic
+  const modalLeaderboard = document.getElementById('modal-leaderboard');
+  const tbodyLeaderboard = document.getElementById('leaderboard-tbody');
+
+  function renderLeaderboardTable() {
+    const raw = localStorage.getItem('lantern_leaderboard');
+    let entries = [];
+    try {
+      entries = raw ? JSON.parse(raw).entries || [] : [];
+    } catch {
+      entries = [];
+    }
+    if (entries.length === 0) {
+      entries = [
+        { name: 'Player_Pro', score: 950, nights_won: 3, achieved_at: '2026-11-20T10:00:00.000Z' },
+        { name: 'May_Keeper', score: 620, nights_won: 2, achieved_at: '2026-11-20T11:30:00.000Z' },
+        { name: 'Lantern_Ace', score: 480, nights_won: 1, achieved_at: '2026-11-20T14:15:00.000Z' }
+      ];
+    }
+    tbodyLeaderboard.innerHTML = entries.map((e, idx) => `
+      <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+        <td style="padding: 6px 8px; color: var(--gold); font-weight: 700;">#${idx + 1}</td>
+        <td style="padding: 6px 8px; font-weight: 600;">${e.name}</td>
+        <td style="padding: 6px 8px; color: #64ffda;">${e.score}</td>
+        <td style="padding: 6px 8px;">${e.nights_won}</td>
+        <td style="padding: 6px 8px; font-size: 0.75rem; color: var(--text-muted);">${new Date(e.achieved_at).toLocaleDateString()}</td>
+      </tr>
+    `).join('');
+  }
+
+  document.getElementById('btn-open-leaderboard')?.addEventListener('click', () => {
+    renderLeaderboardTable();
+    modalLeaderboard.style.display = 'flex';
+  });
+
+  document.getElementById('btn-close-leaderboard')?.addEventListener('click', () => {
+    modalLeaderboard.style.display = 'none';
+  });
+
+  // Save Score from Game Over screen
+  document.getElementById('btn-save-score')?.addEventListener('click', () => {
+    const nameInput = document.getElementById('input-player-name');
+    const msgEl = document.getElementById('save-score-msg');
+    const val = nameInput ? nameInput.value.trim() : '';
+
+    if (!val || val.length < 3 || val.length > 12 || !/^[A-Za-z0-9_\u00C0-\u1EF9]+$/.test(val)) {
+      msgEl.style.display = 'block';
+      msgEl.style.color = 'var(--danger)';
+      msgEl.textContent = 'Tên phải từ 3–12 ký tự [A-Za-z0-9_]!';
+      return;
+    }
+
+    const raw = localStorage.getItem('lantern_leaderboard');
+    let entries = [];
+    try {
+      entries = raw ? JSON.parse(raw).entries || [] : [];
+    } catch {
+      entries = [];
+    }
+
+    entries.push({
+      name: val,
+      score: game.score,
+      nights_won: game.state === 'won' ? currentNight : (currentNight - 1),
+      achieved_at: new Date().toISOString(),
+      seed: game.seed
+    });
+
+    entries.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(a.achieved_at).getTime() - new Date(b.achieved_at).getTime();
+    });
+    if (entries.length > 10) entries = entries.slice(0, 10);
+
+    localStorage.setItem('lantern_leaderboard', JSON.stringify({ entries }));
+    msgEl.style.display = 'block';
+    msgEl.style.color = '#64ffda';
+    msgEl.textContent = '✓ Đã lưu kỷ lục thành công!';
+    nameInput.disabled = true;
+    document.getElementById('btn-save-score').disabled = true;
   });
 
   // UI Button Events
@@ -756,6 +932,56 @@ export function createGameApp(container) {
       arrowIcon.style.transform = `rotate(${angleDeg}deg)`;
     } else if (arrowEl) {
       arrowEl.style.display = 'none';
+    }
+
+    // Subtitles & Visual Indicator Alerts
+    const subtitleEl = document.getElementById('hud-subtitle');
+    if (subtitleEl) {
+      if (timeLeft <= 10 && timeLeft > 0) {
+        subtitleEl.textContent = '⏳ 10 GIÂY CUỐI CÙNG TRƯỚC BÌNH MINH!';
+        subtitleEl.classList.add('visible');
+      } else if (game.wind && game.wind.warn_ticks > 0) {
+        subtitleEl.textContent = '⚠️ Cơn gió mạnh sắp tràn qua đảo!';
+        subtitleEl.classList.add('visible');
+      } else {
+        const hasLowFuelLantern = game.lanterns.some(l => l.lit && l.fuel < game.tuning.low_fuel_threshold);
+        if (hasLowFuelLantern) {
+          subtitleEl.textContent = '🏮 Lồng đèn sắp cạn dầu (<30%)!';
+          subtitleEl.classList.add('visible');
+        } else {
+          subtitleEl.classList.remove('visible');
+        }
+      }
+    }
+
+    // Edge Arrow for nearest Shade
+    const shadeArrowEl = document.getElementById('shade-arrow');
+    const shadeDirEl = document.getElementById('shade-dir');
+    let nearestShade = null;
+    let minShadeDist = Infinity;
+    for (const s of game.shades) {
+      if (s.state !== 'stunned') {
+        const dx = s.pos[0] - game.player.pos[0];
+        const dz = s.pos[2] - game.player.pos[2];
+        const dist = Math.hypot(dx, dz);
+        if (dist < minShadeDist) {
+          minShadeDist = dist;
+          nearestShade = s;
+        }
+      }
+    }
+
+    if (nearestShade && minShadeDist <= 14.0 && shadeArrowEl && shadeDirEl) {
+      shadeArrowEl.classList.add('visible');
+      const dx = nearestShade.pos[0] - game.player.pos[0];
+      const dz = nearestShade.pos[2] - game.player.pos[2];
+      if (Math.abs(dx) > Math.abs(dz)) {
+        shadeDirEl.textContent = dx > 0 ? '➡️' : '⬅️';
+      } else {
+        shadeDirEl.textContent = dz > 0 ? '⬇️' : '⬆️';
+      }
+    } else if (shadeArrowEl) {
+      shadeArrowEl.classList.remove('visible');
     }
 
     // Pause Modal
