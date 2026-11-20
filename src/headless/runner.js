@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Đảo Đèn Lồng - Headless Test Contract Runner v1.0
- * Runs deterministic simulation at 60 ticks/s and outputs JSON Lines (.jsonl).
+ * Đảo Đèn Lồng - Headless Test Contract Runner v1.1
+ * Supports Night 1, 2, 3 simulation at 60 ticks/s and outputs JSON Lines (.jsonl).
  */
 
 import fs from 'node:fs';
@@ -60,6 +60,11 @@ function main() {
     process.exit(2);
   }
 
+  if (![1, 2, 3].includes(options.night)) {
+    console.error('Error: --night must be 1, 2, or 3.');
+    process.exit(2);
+  }
+
   // Load contract tuning if available
   let contractTuning = {};
   const contractFile = path.resolve(process.cwd(), 'game.contract.json');
@@ -89,20 +94,18 @@ function main() {
   }
 
   // Load inputs if provided
-  let inputsMap = {}; // tick -> input
+  let inputsMap = {};
   if (options.inputsPath) {
     try {
       const rawInputs = fs.readFileSync(path.resolve(process.cwd(), options.inputsPath), 'utf8');
       const parsedInputs = JSON.parse(rawInputs);
       if (Array.isArray(parsedInputs)) {
-        // [{tick: 0, x: 0, z: 1, ...}]
         for (const item of parsedInputs) {
           if (item && typeof item.tick === 'number') {
             inputsMap[item.tick] = item;
           }
         }
       } else if (typeof parsedInputs === 'object' && parsedInputs !== null) {
-        // {"0": {...}, "1": {...}}
         inputsMap = parsedInputs;
       } else {
         exitWithValidationCode('Inputs must be an array or object.');
@@ -121,14 +124,15 @@ function main() {
     outStream.write(JSON.stringify(obj) + '\n');
   }
 
-  // Initialize GameState
+  // Initialize GameState with night parameter
   const game = new GameState({
     seed: options.seed,
+    night: options.night,
     tuning: contractTuning,
     scenario: scenario
   });
 
-  // Emit initial events (e.g. shade_spawned)
+  // Emit initial pending events (e.g. night_start)
   if (game.pending_events && game.pending_events.length > 0) {
     for (const ev of game.pending_events) {
       writeLine(ev);
@@ -147,20 +151,17 @@ function main() {
     const inputForTick = inputsMap[k] || {};
     const events = game.step(inputForTick);
 
-    // Emit events produced by step k (labeled tick = k + 1)
     for (const ev of events) {
       writeLine(ev);
     }
 
     const currentTick = k + 1;
-    // Emit periodic snapshots
     if (options.snapshotEvery > 0 && currentTick % options.snapshotEvery === 0) {
       writeLine(game.getSnapshot(currentTick));
       lastWrittenSnapshotTick = currentTick;
     }
   }
 
-  // Final snapshot if not already emitted
   if (lastWrittenSnapshotTick !== totalTicks) {
     writeLine(game.getSnapshot(totalTicks));
   }
@@ -174,7 +175,7 @@ function main() {
   });
 
   outStream.end(() => {
-    console.log(`[Headless Runner] Finished ${totalTicks} ticks simulation. Output saved to ${options.outPath}`);
+    console.log(`[Headless Runner v1.1] Finished ${totalTicks} ticks simulation (Night ${options.night}). Output: ${options.outPath}`);
     process.exit(0);
   });
 }

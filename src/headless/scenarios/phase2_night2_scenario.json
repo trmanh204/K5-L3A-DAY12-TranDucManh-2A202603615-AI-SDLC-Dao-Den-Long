@@ -1,0 +1,24 @@
+{
+  "player": {
+    "pos": [0, 0, 0],
+    "flames": 3,
+    "carried": 5
+  },
+  "lanterns": [
+    { "id": "L1", "pos": [0, 0, 20], "lit": false, "deposited": 5 },
+    { "id": "L2", "pos": [17, 0, -10], "lit": false, "deposited": 0 },
+    { "id": "L3", "pos": [-17, 0, -10], "lit": false, "deposited": 0 },
+    { "id": "L4", "pos": [70, 0, 20], "lit": false, "deposited": 0 },
+    { "id": "L5", "pos": [87, 0, -10], "lit": false, "deposited": 0 },
+    { "id": "L6", "pos": [53, 0, -10], "lit": false, "deposited": 0 }
+  ],
+  "shades": [
+    { "id": "S1", "pos": [15, 0, 15], "state": "wander" }
+  ],
+  "drifters": [
+    { "id": "D1", "pos": [5, 1.5, 5], "state": "idle", "stolen": 0 }
+  ],
+  "charms": [
+    { "id": "C1", "pos": [35, 0, 0], "available": true }
+  ]
+}
