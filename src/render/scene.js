@@ -427,18 +427,22 @@ export function createGameApp(container) {
   });
 
   // Settings Persistence (localStorage)
-  const savedSettings = JSON.parse(localStorage.getItem('lantern_settings') || '{"volume":80,"sens":5}');
+  const savedSettings = JSON.parse(localStorage.getItem('lantern_settings') || '{"volume":80,"sens":5,"cbMode":false}');
   const modalSettings = document.getElementById('modal-settings');
   const inputVol = document.getElementById('input-volume');
   const inputSens = document.getElementById('input-sens');
   const valVol = document.getElementById('val-volume');
   const valSens = document.getElementById('val-sens');
+  const inputCbMode = document.getElementById('input-cb-mode');
 
   if (inputVol && inputSens) {
     inputVol.value = savedSettings.volume;
     inputSens.value = savedSettings.sens;
     valVol.textContent = `${savedSettings.volume}%`;
     valSens.textContent = savedSettings.sens;
+    if (inputCbMode) {
+      inputCbMode.checked = !!savedSettings.cbMode;
+    }
 
     inputVol.addEventListener('input', () => { valVol.textContent = `${inputVol.value}%`; });
     inputSens.addEventListener('input', () => { valSens.textContent = inputSens.value; });
@@ -451,8 +455,12 @@ export function createGameApp(container) {
   document.getElementById('btn-save-settings').addEventListener('click', () => {
     const newSettings = {
       volume: Number(inputVol.value),
-      sens: Number(inputSens.value)
+      sens: Number(inputSens.value),
+      cbMode: inputCbMode ? inputCbMode.checked : false
     };
+    savedSettings.volume = newSettings.volume;
+    savedSettings.sens = newSettings.sens;
+    savedSettings.cbMode = newSettings.cbMode;
     localStorage.setItem('lantern_settings', JSON.stringify(newSettings));
     modalSettings.style.display = 'none';
   });
@@ -571,13 +579,20 @@ export function createGameApp(container) {
       const item = lanternMeshes.get(l.id);
       if (item) {
         if (l.lit) {
-          item.lamp.material.color.setHex(0xFFB347);
-          item.lamp.material.emissive = new THREE.Color(0xFFE9B0);
-          item.lamp.material.emissiveIntensity = 3.0;
-          item.light.intensity = 5.0;
-          item.safeRing.material.opacity = 0.5 + Math.sin(time * 2) * 0.15;
+          // Check low fuel blinking (< 30)
+          const isLowFuel = l.fuel < game.tuning.low_fuel_threshold;
+          const blinkVisible = !isLowFuel || (Math.floor(time * 2) % 2 === 0);
+
+          item.lamp.scale.set(1, 1, 1);
+          item.lamp.material.color.setHex(blinkVisible ? 0xFFB347 : 0x5B5F6E);
+          item.lamp.material.emissive = new THREE.Color(blinkVisible ? 0xFFE9B0 : 0x000000);
+          item.lamp.material.emissiveIntensity = blinkVisible ? 3.0 : 0.5;
+          item.light.intensity = blinkVisible ? 5.0 : 1.0;
+          item.safeRing.material.opacity = isLowFuel ? 0 : (0.5 + Math.sin(time * 2) * 0.15);
         } else {
-          const ratio = l.deposited / game.tuning.lantern_cost;
+          // Extinguished lantern: in colorblind mode, flattened by 20% (scale.y = 0.8)
+          const ratio = l.deposited / (l.ever_lit ? game.tuning.relight_cost : game.tuning.lantern_cost);
+          item.lamp.scale.set(1, savedSettings.cbMode ? 0.8 : 1.0, 1);
           item.lamp.material.color.setHex(0x5B5F6E);
           item.lamp.material.emissive = new THREE.Color(0xFFB347);
           item.lamp.material.emissiveIntensity = ratio * 1.5;
@@ -590,11 +605,17 @@ export function createGameApp(container) {
     // Sync Shades
     shadesGroup.clear();
     const shadeGeo = new THREE.DodecahedronGeometry(0.65, 1);
-    const shadeMat = new THREE.MeshStandardMaterial({ color: 0x120A1A, roughness: 0.9 });
+    const shadeMat = new THREE.MeshStandardMaterial({
+      color: 0x120A1A,
+      roughness: 0.9,
+      emissive: new THREE.Color(savedSettings.cbMode ? 0x00B3FF : 0x7A3CFF),
+      emissiveIntensity: 0.6
+    });
     for (const s of game.shades) {
       const sMesh = new THREE.Mesh(shadeGeo, shadeMat);
       sMesh.position.set(s.pos[0], s.pos[1] + 0.8 + Math.sin(time * 2 + s.pos[0]) * 0.15, s.pos[2]);
       if (s.state === 'stunned') sMesh.material.color.setHex(0x3A3450);
+      if (s.state === 'drain') sMesh.material.color.setHex(0x550055);
       shadesGroup.add(sMesh);
     }
 
@@ -681,10 +702,10 @@ export function createGameApp(container) {
 
     // Interaction prompt
     const promptEl = document.getElementById('prompt-interact');
-    const promptVal = document.getElementById('prompt-val');
     let nearLantern = null;
     for (const l of game.lanterns) {
-      if (!l.lit) {
+      const canReceive = !l.lit || (l.lit && l.fuel < 100);
+      if (canReceive) {
         const dx = l.pos[0] - game.player.pos[0];
         const dz = l.pos[2] - game.player.pos[2];
         if (Math.hypot(dx, dz) <= game.tuning.interact_radius) {
@@ -695,7 +716,12 @@ export function createGameApp(container) {
     }
     if (nearLantern && promptEl) {
       promptEl.style.display = 'block';
-      promptVal.textContent = `${nearLantern.deposited}/10`;
+      if (!nearLantern.lit) {
+        const cost = nearLantern.ever_lit ? game.tuning.relight_cost : game.tuning.lantern_cost;
+        promptEl.textContent = `E — ${nearLantern.ever_lit ? 'Thắp lại' : 'Thắp đèn'} (${nearLantern.deposited}/${cost})`;
+      } else {
+        promptEl.textContent = `E — Châm dầu (${Math.round(nearLantern.fuel)}/100)`;
+      }
     } else if (promptEl) {
       promptEl.style.display = 'none';
     }
