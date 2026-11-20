@@ -498,7 +498,7 @@ export class GameState {
       if (distA <= 28.0) return 0;
       const distB = Math.sqrt((x - 70) * (x - 70) + z * z);
       if (distB <= 28.0) return 0;
-      if (x >= 26.0 && x <= 44.0 && z >= -2.0 && z <= 2.0) return 0;
+      if (x >= 25.0 && x <= 45.0 && z >= -2.4 && z <= 2.4) return 0;
       return null;
     } else if (this.night === 3) {
       const dist = Math.sqrt(x * x + z * z);
@@ -664,7 +664,7 @@ export class GameState {
       if (windCycle === windPeriod - 120) {
         this.wind.warn_ticks = 120;
       }
-      if (windCycle === 0) {
+      if (this.sim_ticks > 0 && windCycle === 0) {
         this.wind.active = true;
         this.wind.timer_ticks = this.tuning.wind_duration_s * 60;
         this.wind.dir_deg = Math.floor(this.rng() * 360);
@@ -686,7 +686,7 @@ export class GameState {
         this.invuln_ticks = this.tuning.invuln_ticks;
       }
     } else {
-      if (trigDash && this.dash_ticks_left <= 0) {
+      if (trigDash && this.dash_ticks_left <= 0 && !this.player.in_pad_flight) {
         const canDash = this.charm_ticks > 0 || this.dash_cd_ticks <= 0;
         if (canDash) {
           this.dash_ticks_left = Math.round(this.tuning.dash_duration_s * 60);
@@ -717,8 +717,15 @@ export class GameState {
 
       if (this.dash_ticks_left > 0) {
         this.dash_ticks_left--;
-        this.player.pos[0] += this.dash_dir[0] * this.tuning.dash_speed * dt;
-        this.player.pos[2] += this.dash_dir[1] * this.tuning.dash_speed * dt;
+        const dx = this.dash_dir[0] * this.tuning.dash_speed * dt;
+        const dz = this.dash_dir[1] * this.tuning.dash_speed * dt;
+        const targetGroundY = this.getGroundHeight(this.player.pos[0] + dx, this.player.pos[2] + dz);
+        if (!this.player.in_pad_flight && targetGroundY !== null && targetGroundY > this.player.pos[1] + 0.6) {
+          this.dash_ticks_left = 0;
+        } else {
+          this.player.pos[0] += dx;
+          this.player.pos[2] += dz;
+        }
         this.player.facing = [...this.dash_dir];
       } else if (this.player.in_pad_flight) {
         this.player.pos[0] += this.player.pad_vel[0] * dt;
@@ -739,17 +746,38 @@ export class GameState {
         }
 
         const currentSpeed = this.charm_ticks > 0 ? this.tuning.player_charm_speed : this.tuning.player_speed;
-        this.player.pos[0] += wx * currentSpeed * dt;
-        this.player.pos[2] += wz * currentSpeed * dt;
-
-        if (len > 0.05) {
-          this.player.facing = [wx / len, wz / len];
-        }
+        let dx = wx * currentSpeed * dt;
+        let dz = wz * currentSpeed * dt;
 
         if (this.wind.active) {
           const windRad = (this.wind.dir_deg * Math.PI) / 180.0;
-          this.player.pos[0] += Math.cos(windRad) * this.tuning.wind_push_speed * dt;
-          this.player.pos[2] += Math.sin(windRad) * this.tuning.wind_push_speed * dt;
+          dx += Math.cos(windRad) * this.tuning.wind_push_speed * dt;
+          dz += Math.sin(windRad) * this.tuning.wind_push_speed * dt;
+        }
+
+        // Cliff wall collision: Vách đứng mép các tầng chặn không cho bước lên khi chưa dùng dốc/bục nhảy
+        let canMoveX = true;
+        let canMoveZ = true;
+
+        if (!this.player.in_pad_flight) {
+          const gBoth = this.getGroundHeight(this.player.pos[0] + dx, this.player.pos[2] + dz);
+          if (gBoth !== null && gBoth > this.player.pos[1] + 0.6) {
+            const gX = this.getGroundHeight(this.player.pos[0] + dx, this.player.pos[2]);
+            if (gX !== null && gX > this.player.pos[1] + 0.6) canMoveX = false;
+            const gZ = this.getGroundHeight(this.player.pos[0], this.player.pos[2] + dz);
+            if (gZ !== null && gZ > this.player.pos[1] + 0.6) canMoveZ = false;
+            if (canMoveX && canMoveZ) {
+              canMoveX = false;
+              canMoveZ = false;
+            }
+          }
+        }
+
+        if (canMoveX) this.player.pos[0] += dx;
+        if (canMoveZ) this.player.pos[2] += dz;
+
+        if (len > 0.05) {
+          this.player.facing = [wx / len, wz / len];
         }
 
         if (!this.player.grounded) {
@@ -1201,6 +1229,12 @@ export class GameState {
           }
         }
       }
+
+      // Cập nhật độ cao địa hình Y cho Bóng Mực (Shade) theo từng bậc/dốc của đảo
+      const groundY = this.getGroundHeight(shade.pos[0], shade.pos[2]);
+      if (groundY !== null) {
+        shade.pos[1] = groundY;
+      }
     }
 
     // Move Drifters
@@ -1236,6 +1270,12 @@ export class GameState {
         if (drifter.flee_ticks_left <= 0) {
           drifter.state = "removed";
         }
+      }
+
+      // Cập nhật độ cao địa hình Y cho Gió Lạc (Drifter bay lơ lửng cách mặt đất 1.5m)
+      const dGroundY = this.getGroundHeight(drifter.pos[0], drifter.pos[2]);
+      if (dGroundY !== null) {
+        drifter.pos[1] = dGroundY + 1.5;
       }
     }
 
